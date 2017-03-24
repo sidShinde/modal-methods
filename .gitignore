@@ -1,0 +1,6 @@
+# files in build, dist, modalMethods-egg-info
+build/
+dist/
+modalMethods.egg-info/
+
+*~
