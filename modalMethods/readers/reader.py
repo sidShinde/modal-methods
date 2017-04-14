@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import time
-from progressbar import ProgressBar, Percentage, Bar
+from tqdm import tqdm 
 from .reader_support_functions import *
 
 __all__=["config_to_dict", "read_points_from_foamFile", "read_velocity_from_foamFile"]
@@ -29,7 +29,7 @@ def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts
 
     print('\n importing velocity snapshots ...')
 
-    for i in range(nSnaps):
+    for i in tqdm( range(nSnaps), ncols=100 ):
         fname = filePath + '/' + str(timeDirs[i]) + '/' + patchName + '/' \
                 'vectorField/U'
         data = read_data(fname, cols)
@@ -40,9 +40,6 @@ def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts
         u1[:, i] = temp1[indices]
         u2[:, i] = temp2[indices]
             
-        time.sleep(0.001)
-        update_progress((i+1)/nSnaps)
-
     return u1, u2
 
 
@@ -65,7 +62,7 @@ def read_points_from_foamFile(filePath, cols, nSnaps, patchName,
     timeDirs = get_time_dirs(filePath, nSnaps)
 
     filePath = filePath + '/' + str(timeDirs[0]) + '/' \
-               + patchName + '/faceCentres'
+               + patchName + '/points'
 
     data = read_data(filePath, cols)
     x1 = data[0]/h
