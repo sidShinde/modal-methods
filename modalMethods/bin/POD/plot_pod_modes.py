@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 import os
 import argparse
 from scipy.interpolate import griddata
@@ -11,7 +11,7 @@ from modalMethods.readers.reader_support_functions import *
 from modalMethods.readers.reader import *
 
 
-def plot_setup(caseDir, x1min, x1max, x2min, x2max, nPltPts, nSnaps, points):
+def plot_setup(caseDir, x1min, x1max, x2min, x2max, nPltPts, patchName, nSnaps, points):
     '''
     Input
     -----
@@ -25,22 +25,26 @@ def plot_setup(caseDir, x1min, x1max, x2min, x2max, nPltPts, nSnaps, points):
         x1, x2: coordinates of the snap-shot window
         samplePts: coordinates of the uniform mesh used of plotting
         nx1, nx2: # of points in each direction used for plotting
-        phi1, phi2: POD modes 
+        phi1, phi2: POD modes
         geometry: Path defining the geometry
     '''
 
     print('\n importing data ...')
 
-    fname = caseDir + '/postProcessing/POD/x1_coord_' + str(nSnaps) + '.csv'
+    fname = caseDir + '/postProcessing/POD/x1_coord_' + patchName + '_' + \
+            str(nSnaps) + '.csv'
     x1 = np.loadtxt(fname, delimiter=',')
 
-    fname = caseDir + '/postProcessing/POD/x2_coord_' + str(nSnaps) + '.csv'
+    fname = caseDir + '/postProcessing/POD/x2_coord_' + patchName + '_' + \
+            str(nSnaps) + '.csv'
     x2 = np.loadtxt(fname, delimiter=',')
 
-    fname = caseDir + '/postProcessing/POD/phi1_' + str(nSnaps) + '.csv'
+    fname = caseDir + '/postProcessing/POD/phi1_' + patchName + '_' + \
+            str(nSnaps) + '.csv'
     phi1 = np.loadtxt(fname, delimiter=',')
 
-    fname = caseDir + '/postProcessing/POD/phi2_' + str(nSnaps) + '.csv'
+    fname = caseDir + '/postProcessing/POD/phi2_' + patchName + '_' + \
+            str(nSnaps) + '.csv'
     phi2 = np.loadtxt(fname, delimiter=',')
 
     x1Plt = np.linspace(x1min, x1max, nPltPts)
@@ -81,41 +85,42 @@ def plot_pod_modes(configFile):
     [configDict, modes, points] = config_to_dict(configFile)
 
     # read data from configDict:
-    nSnaps = int( configDict["nSnaps"] )
-    dir1   = configDict["direction1"]
-    dir2   = configDict["direction2"]
-    x1min  = float( configDict["x1min"] )
-    x1max  = float( configDict["x1max"] )
-    x2min  = float( configDict["x2min"] )
-    x2max  = float( configDict["x2max"] )
-    nPltPts = int( configDict["nPltPts"] )
+    patchName = configDict["patchName"]
+    nSnaps    = int( configDict["nSnaps"] )
+    dir1      = configDict["direction1"]
+    dir2      = configDict["direction2"]
+    x1min     = float( configDict["x1min"] )
+    x1max     = float( configDict["x1max"] )
+    x2min     = float( configDict["x2min"] )
+    x2max     = float( configDict["x2max"] )
+    nPltPts   = int( configDict["nPltPts"] )
 
     # import data from postProcessing/POD
-    caseDir = os.getcwd() 
+    caseDir = os.getcwd()
 
     # getting plotting info from configFile:
     x1, x2, samplePts, nPltPts, phi1, phi2, geometry = \
-    plot_setup(caseDir, x1min, x1max, x2min, x2max, nPltPts, nSnaps, points)
-    
+    plot_setup(caseDir, x1min, x1max, x2min, x2max, nPltPts, patchName, nSnaps, points)
+
     # directions to plot for:
     direction = [dir1, dir2]
 
     print('\n plotting data ...')
-    for i in range( len( modes ) ): 
-        for j in range( len( direction ) ): 
+    for i in range( len( modes ) ):
+        for j in range( len( direction ) ):
 
             if direction[j] == dir1:
                 phi = phi1
             else:
                 phi = phi2
-                
-            # interpolate data on a regular mesh: 
+
+            # interpolate data on a regular mesh:
             phiTemp = griddata( (x1, x2), phi[:, modes[i]],
                                samplePts, method='linear')
             phiPlt = phiTemp.reshape(nPltPts, nPltPts)
 
             # generate plot:
-            plt.figure(figsize=(13, 6))
+            fig = plt.figure(figsize=(13, 6))
             ax = plt.gca()
 
             patch = patches.PathPatch(geometry, facecolor='black', lw=1)
@@ -143,12 +148,13 @@ def plot_pod_modes(configFile):
 
             plt.xlabel(r'$x/H_{\rm{ramp}}$', fontsize=24)
             plt.ylabel(r'$y/H_{\rm{ramp}}$', fontsize=24)
-            
+
             pltName = caseDir + '/postProcessing/POD/' + direction[j] + \
-                      '_mode_' + str( modes[i] ) + '_snaps_' + str( nSnaps ) + \
-                      '.pdf'
+                      '_mode_' + str( modes[i] ) + '_' + patchName + '_' + \
+                      str( nSnaps ) + '.pdf'
             plt.savefig(pltName)
-                      
+            plt.close(fig)
+
 
 def main():
     # Parse the command-line arguments
@@ -166,5 +172,3 @@ def main():
     configFile = open(args.config, mode='r')
 
     plot_pod_modes(configFile)
-
-

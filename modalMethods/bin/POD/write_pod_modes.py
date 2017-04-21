@@ -24,7 +24,8 @@ def main():
     # Parse the config
     configFile = open(args.config, mode='r')
 
-    [x1, x2, phi1, phi2, singVals, nSnaps] = get_modes(configFile)
+
+    [x1, x2, phi1, phi2, singVals, patchName, nSnaps] = get_modes(configFile)
 
     # make POD directory in postProcessing:
     podDir = './postProcessing/POD'
@@ -33,22 +34,20 @@ def main():
 
     # write the files:
     print('\n writing POD modes ...')
-    fname = podDir + '/x1_coord_' + str(nSnaps) + '.csv'
+    fname = podDir + '/x1_coord_' + patchName + '_' + str(nSnaps) + '.csv'
     np.savetxt(fname, x1, delimiter = ',', fmt='%1.4e')
 
-    fname = podDir + '/x2_coord_' + str(nSnaps) + '.csv'
+    fname = podDir + '/x2_coord_' + patchName + '_' + str(nSnaps) + '.csv'
     np.savetxt(fname, x2, delimiter = ',', fmt='%1.4e')
 
-    fname = podDir + '/phi1_' + str(nSnaps) + '.csv'
+    fname = podDir + '/phi1_' + patchName + '_' + str(nSnaps) + '.csv'
     np.savetxt(fname, phi1, delimiter = ',', fmt='%1.4e')
 
-    fname = podDir + '/phi2_' + str(nSnaps) + '.csv'
+    fname = podDir + '/phi2_' + patchName + '_' + str(nSnaps) + '.csv'
     np.savetxt(fname, phi2, delimiter = ',', fmt='%1.4e')
 
-    fname = podDir + '/singVals_' + str(nSnaps) + '.csv'
+    fname = podDir + '/singVals_' + patchName + '_' + str(nSnaps) + '.csv'
     np.savetxt(fname, singVals, delimiter = ',', fmt='%1.4e')
 
 if __name__ == "__main__":
     main()
-
-    
