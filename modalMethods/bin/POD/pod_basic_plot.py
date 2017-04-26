@@ -32,18 +32,22 @@ def plot_setup(caseDir, x1min, x1max, x2min, x2max, nPltPts, patchName, nSnaps, 
 
     print('\n importing data ...')
 
+    print('  - x1')
     fname = caseDir + '/postProcessing/POD/x1_coord_' + patchName + '_' + \
             str(nSnaps) + '.csv'
     x1 = np.loadtxt(fname, delimiter=',')
 
+    print('  - x2')
     fname = caseDir + '/postProcessing/POD/x2_coord_' + patchName + '_' + \
             str(nSnaps) + '.csv'
     x2 = np.loadtxt(fname, delimiter=',')
 
+    print('  - phi1')
     fname = caseDir + '/postProcessing/POD/phi1_' + patchName + '_' + \
             str(nSnaps) + '.csv'
     phi1 = np.loadtxt(fname, delimiter=',')
 
+    print('  - phi2')
     fname = caseDir + '/postProcessing/POD/phi2_' + patchName + '_' + \
             str(nSnaps) + '.csv'
     phi2 = np.loadtxt(fname, delimiter=',')
