@@ -25,6 +25,7 @@ def get_modes(configFile):
     filePath  = filePath + '/postProcessing/cuttingPlane'
     patchName = configDict["patchName"]
     nSnaps    = int( configDict["nSnaps"] )
+    nModes    = int( configDict["nModes"] )
     dir1      = configDict["direction1"]
     dir2      = configDict["direction2"]
     x1min     = float( configDict["x1min"] )
@@ -49,6 +50,10 @@ def get_modes(configFile):
     eigVect, singVals, _ = np.linalg.svd(c)
 
     phi1, phi2 = get_normal_phi(u1, u2, eigVect, nSnaps, nPts)
+
+    singVals = np.delete(singVals, np.s_[nModes::])
+    phi1     = np.delete(phi1, np.s_[nModes::], 1)
+    phi2     = np.delete(phi2, np.s_[nModes::], 1)
 
     return x1, x2, phi1, phi2, singVals, patchName, nSnaps
 
