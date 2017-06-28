@@ -6,31 +6,6 @@ import time, sys
 __all__=["update_progress", "get_columns", "read_data", "get_indices_npts", "get_time_dirs"]
 
 
-# update_progress() : Displays or updates a console progress bar
-## Accepts a float between 0 and 1. Any int will be converted to a float.
-## A value under 0 represents a 'halt'.
-## A value at 1 or bigger represents 100%
-def update_progress(progress):
-    barLength = 20 # Modify this to change the length of the progress bar
-    status = ""
-    if isinstance(progress, int):
-        progress = float(progress)
-    if not isinstance(progress, float):
-        progress = 0
-        status = "error: progress var must be float\r\n"
-    if progress < 0:
-        progress = 0
-        status = "Halt...\r\n"
-    if progress >= 1:
-        progress = 1
-        status = "Done...\r\n"
-    block = int(round(barLength*progress))
-    text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), 
-                                               round(progress*100, 1), status )
-    sys.stdout.write(text)
-    sys.stdout.flush()
-
-
 def get_columns(dir1, dir2):
     '''return the column numbers of the POD directions'''
 
@@ -70,6 +45,49 @@ def read_data(filePath, cols):
                 continue
                 
     return np.array(data)
+
+
+def get_internal_field(fname, skiprows=0):
+    nCols = get_number_of_cols(fname, skiprows)
+    data = [[] for i in range(nCols)]
+
+    count = 0                   # line counter
+    pointsInternalField = 0     # number of points in the internal field
+
+    with open(fname) as f:
+        for line in f:
+            count += 1
+
+            if count == (skiprows-1):
+                line = re.split(r'[\s]', line)
+
+                # remove whitespaces from the line
+                while '' in line:
+                    line.remove('')
+
+                pointsInternalField = int( line[0] )
+
+            elif (count > skiprows) and (count <= pointsInternalField + skiprows):
+                line = re.split(r'[(|)|\s]', line)
+
+                # remove whitespaces from the line
+                while '' in line:
+                    line.remove('')
+
+                try:
+                    for i in range( nCols ):
+                        data[i].append( float( line[i] ) )
+
+                except:
+                    continue
+
+            elif count > pointsInternalField + skiprows:
+                break
+
+            # skip rows
+            else: continue
+
+    return np.array(data).T
 
 
 def get_indices_npts(x1, x2, x1min, x2min, x1max, x2max):

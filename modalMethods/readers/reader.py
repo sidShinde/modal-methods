@@ -6,7 +6,7 @@ from .reader_support_functions import *
 
 __all__=["config_to_dict", "read_points_from_foamFile", "read_velocity_from_foamFile"]
 
-def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts):
+def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts, nDim):
     '''
     Input
     -----
@@ -26,21 +26,36 @@ def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts
 
     u1 = np.zeros((nPts, nSnaps))
     u2 = np.zeros((nPts, nSnaps))
+    if nDim == 3:
+        u3 = np.zeros((nPts, nSnaps))
 
     print('\n importing velocity snapshots ...')
 
-    for i in tqdm( range(nSnaps), ncols=100 ):
-        fname = filePath + '/' + str(timeDirs[i]) + '/' + patchName + '/' \
+    # 2d problem:
+    if nDim == 2:
+        for i in tqdm( range(nSnaps), ncols=100 ):
+            fname = filePath + '/' + str(timeDirs[i]) + '/' + patchName + '/' \
                 'vectorField/U'
-        data = read_data(fname, cols)
+            data = read_data(fname, cols)
         
-        temp1 = data[0]
-        temp2 = data[1]
+            temp1 = data[0]
+            temp2 = data[1]
         
-        u1[:, i] = temp1[indices]
-        u2[:, i] = temp2[indices]
+            u1[:, i] = temp1[indices]
+            u2[:, i] = temp2[indices]
             
-    return u1, u2
+        return u1, u2
+    # 3d problem:
+    elif nDim == 3:
+        for i in tqdm( range(nSnaps), ncols=100 ):
+            fname = filePath + '/' + str(timeDirs[i]) '/' + \
+                    'U'
+            data = get_internal_field(fname, skiprows=22)
+
+            u1[:, i] = data[indices, 0]
+            u2[:, i] = data[indices, 1]
+            u3[:, i] = data[indices, 2]
+
 
 
 def read_points_from_foamFile(filePath, cols, nSnaps, patchName,
