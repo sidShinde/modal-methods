@@ -65,7 +65,7 @@ def get_modes(configFile):
         print('\n performing SVD ...')
         eigVect, singVals, _ = np.linalg.svd(c)
 
-        phi1, phi2 = get_normal_phi(u1, u2, 0, eigVect, nSnaps, nPts)
+        phi1, phi2 = get_normal_phi(u1, u2, u3=0, eigVect, nSnaps, nPts)
 
         singVals = np.delete(singVals, np.s_[nModes::])
         phi1     = np.delete(phi1, np.s_[nModes::], 1)
