@@ -1,4 +1,5 @@
 import os
+from subprocess import call
 import numpy as np
 import time
 from tqdm import tqdm 
@@ -56,10 +57,14 @@ def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts
             u2[:, i] = data[indices, 1]
             u3[:, i] = data[indices, 2]
 
+        return u1, u2, u3
+        
+    else:
+        raise ValueError('Oops! Number of dimensions not defined ...')
 
 
 def read_points_from_foamFile(filePath, cols, nSnaps, patchName,
-                              x1min, x1max, x2min, x2max, h):
+                              minX, maxX, h, nDim):
     '''
     Input
     -----
@@ -76,19 +81,50 @@ def read_points_from_foamFile(filePath, cols, nSnaps, patchName,
     
     timeDirs = get_time_dirs(filePath, nSnaps)
 
-    filePath = filePath + '/' + str(timeDirs[0]) + '/' \
-               + patchName + '/points'
+    if nDim == 2:
+        filePath = filePath + '/' + str(timeDirs[0]) + '/' \
+                   + patchName + '/points'
 
-    data = read_data(filePath, cols)
-    x1 = data[0]/h
-    x2 = data[1]/h
+        coordData = read_data(filePath, cols)
+        coordData /= h
 
-    indices, nPts = get_indices_npts(x1, x2, x1min, x2min, x1max, x2max)
+        indices, nPts = get_indices_npts(coordData, minX, maxX, nDim)
 
-    x1 = x1[indices]
-    x2 = x2[indices]
+        x1 = coordData[indices, 0]
+        x2 = coordData[indices, 1]
     
-    return x1, x2, indices, nPts
+        return x1, x2, indices, nPts
+
+    elif nDim == 3:
+        cellCentres = filePath + '/' + str(timeDirs[0]) + '/' \
+                      + 'cellCentres'
+
+        if os.path.exists(cellCentres):
+            coordData = get_internal_field(cellCentres, skiprows=22)
+
+        # if cellCentres file does not exists then, run the "myWriteCellCentres"
+        # command in the case directory
+        else:
+            fnull = open(os.devnull, 'w')
+            out = call(['myWriteCellCentres', '-time', str(timeDirs[0])],
+                       stdout=fnull)
+            if out != 0:
+                raise RuntimeError('Oops! Something went wrong with 
+                myWriteCellCentres ...')
+
+            coordData = get_internal_field(cellCentres, skiprows=22)
+            
+        indices, nPts = get_indices_npts(coordData, minX, maxX, nDim)
+        
+        x1 = coordData[indices, 0]
+        x2 = coordData[indices, 1]
+        x3 = coordData[indices, 2]
+    
+        return x1, x2, x3, indices, nPts
+        
+    else:
+        raise ValueError('Oops! Number of dimensions not defined ...')
+
     
 def config_to_dict(configFile):
     """Parse a config file to dictionary"""

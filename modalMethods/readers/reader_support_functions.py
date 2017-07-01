@@ -90,7 +90,7 @@ def get_internal_field(fname, skiprows=0):
     return np.array(data).T
 
 
-def get_indices_npts(x1, x2, x1min, x2min, x1max, x2max):
+def get_indices_npts(coordData, minX, maxX, nDim):
     '''
     Input
     -----
@@ -105,12 +105,20 @@ def get_indices_npts(x1, x2, x1min, x2min, x1max, x2max):
     '''
 
     indices = []
-    npts = x1.shape[0]
+    npts = coordData.shape[0]
 
     for i in range(npts):
-        if ( (x1min <= x1[i]) and (x1[i] <= x1max) and
-             (x2min <= x2[i]) and (x2[i] <= x2max) ):
-            indices.append(i)
+
+        if nDim == 2:
+            if ( (minX['x1'] <= coordData[i, 0]) and (coordData[i, 0] <= maxX['x1']) and
+                 (minX['x2'] <= coordData[i, 1]) and (coordData[i, 1] <= maxX['x2'] ):
+                indices.append(i)
+
+        elif nDim == 3:
+            if ( (minX['x1'] <= coordData[i, 0]) and (coordData[i, 0] <= maxX['x1']) and
+                 (minX['x2'] <= coordData[i, 1]) and (coordData[i, 1] <= maxX['x2']) and
+                 (minX['x3'] <= coordData[i, 2]) and (coordData[i, 2] <= maxX['x3'] ):
+                 indices.append(i)
 
     indices = np.array(indices)
     nPts = indices.size
