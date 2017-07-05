@@ -24,12 +24,18 @@ def main():
     # Parse the config
     configFile = open(args.config, mode='r')
     [configDict, _, _] = config_to_dict(configFile)
-    nDim = int( configDict['nDim'] )
+    nDim       = int( configDict['nDim'] ) 
+    configFile.close()
+
+    configFile = open(args.config, mode='r')
 
     if nDim == 2:
         [x1, x2, phi1, phi2, singVals, patchName, nSnaps] = get_modes(configFile)
 
         # make POD directory in postProcessing:
+        podDir = './postProcessing'
+        if not os.path.exists(podDir):
+            os.mkdir(podDir)
         podDir = './postProcessing/POD'
         if not os.path.exists(podDir):
             os.mkdir(podDir)
@@ -55,33 +61,38 @@ def main():
         [x1, x2, x3, phi1, phi2, phi3, singVals, patchName, nSnaps] = get_modes(configFile)
 
         # make POD directory in postProcessing:
+        podDir = './postProcessing'
+        if not os.path.exists(podDir):
+            os.mkdir(podDir)
         podDir = './postProcessing/POD'
         if not os.path.exists(podDir):
             os.mkdir(podDir)
 
         # write the files:
         print('\n writing POD modes ...')
-        fname = podDir + '/x1_coord_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/x1_coord_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, x1, delimiter = ',', fmt='%1.4e')
 
-        fname = podDir + '/x2_coord_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/x2_coord_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, x2, delimiter = ',', fmt='%1.4e')
 
-        fname = podDir + '/x3_coord_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/x3_coord_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, x3, delimiter = ',', fmt='%1.4e')
 
-        fname = podDir + '/phi1_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/phi1_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, phi1, delimiter = ',', fmt='%1.4e')
         
-        fname = podDir + '/phi2_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/phi2_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, phi2, delimiter = ',', fmt='%1.4e')
 
-        fname = podDir + '/phi3_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/phi3_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, phi3, delimiter = ',', fmt='%1.4e')
 
-        fname = podDir + '/singVals_' + patchName + '_' + str(nSnaps) + '.csv'
+        fname = podDir + '/singVals_3d_' + str(nSnaps) + '.csv'
         np.savetxt(fname, singVals, delimiter = ',', fmt='%1.4e')
 
+    else:
+        raise ValueError('Oops! number of dimensions not specified ...')
 
 if __name__ == "__main__":
     main()

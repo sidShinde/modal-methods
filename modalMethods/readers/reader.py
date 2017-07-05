@@ -7,7 +7,7 @@ from .reader_support_functions import *
 
 __all__=["config_to_dict", "read_points_from_foamFile", "read_velocity_from_foamFile"]
 
-def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts, nDim):
+def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim, cols=0):
     '''
     Input
     -----
@@ -49,7 +49,7 @@ def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts
     # 3d problem:
     elif nDim == 3:
         for i in tqdm( range(nSnaps), ncols=100 ):
-            fname = filePath + '/' + str(timeDirs[i]) '/' + \
+            fname = filePath + '/' + str(timeDirs[i]) + '/' + \
                     'U'
             data = get_internal_field(fname, skiprows=22)
 
@@ -63,8 +63,8 @@ def read_velocity_from_foamFile(filePath, patchName, cols, indices, nSnaps, nPts
         raise ValueError('Oops! Number of dimensions not defined ...')
 
 
-def read_points_from_foamFile(filePath, cols, nSnaps, patchName,
-                              minX, maxX, h, nDim):
+def read_points_from_foamFile(filePath, nSnaps, patchName,
+                              minX, maxX, h, nDim, cols=0):
     '''
     Input
     -----
@@ -109,8 +109,8 @@ def read_points_from_foamFile(filePath, cols, nSnaps, patchName,
             out = call(['myWriteCellCentres', '-time', str(timeDirs[0])],
                        stdout=fnull)
             if out != 0:
-                raise RuntimeError('Oops! Something went wrong with 
-                myWriteCellCentres ...')
+                raise RuntimeError('Oops! Something went wrong with' + 
+                                   ' myWriteCellCentres ...')
 
             coordData = get_internal_field(cellCentres, skiprows=22)
             

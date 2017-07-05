@@ -3,7 +3,7 @@ import os
 import re
 import time, sys
 
-__all__=["update_progress", "get_columns", "read_data", "get_indices_npts", "get_time_dirs"]
+__all__=["get_columns", "read_data", "get_internal_field", "get_indices_npts", "get_time_dirs"]
 
 
 def get_columns(dir1, dir2):
@@ -19,6 +19,29 @@ def get_columns(dir1, dir2):
         raise ValueError('\n wrong set of dimensions ...')
 
     return cols
+
+
+def get_number_of_cols(fname, skiprows=0):
+    count = 0
+    with open(fname) as f:
+        for line in f:
+            count += 1
+
+            if count > skiprows:
+                line = re.split(r'[(|)|\s]', line)
+                while '' in line:
+                    line.remove('')
+
+                try:
+                    temp = float( line[0] )
+                    nCols = len(line)
+                    break
+                except:
+                    continue
+
+            else: continue
+
+    return nCols
 
 
 def read_data(filePath, cols):
@@ -111,13 +134,13 @@ def get_indices_npts(coordData, minX, maxX, nDim):
 
         if nDim == 2:
             if ( (minX['x1'] <= coordData[i, 0]) and (coordData[i, 0] <= maxX['x1']) and
-                 (minX['x2'] <= coordData[i, 1]) and (coordData[i, 1] <= maxX['x2'] ):
+                 (minX['x2'] <= coordData[i, 1]) and (coordData[i, 1] <= maxX['x2']) ):
                 indices.append(i)
 
         elif nDim == 3:
             if ( (minX['x1'] <= coordData[i, 0]) and (coordData[i, 0] <= maxX['x1']) and
                  (minX['x2'] <= coordData[i, 1]) and (coordData[i, 1] <= maxX['x2']) and
-                 (minX['x3'] <= coordData[i, 2]) and (coordData[i, 2] <= maxX['x3'] ):
+                 (minX['x3'] <= coordData[i, 2]) and (coordData[i, 2] <= maxX['x3']) ):
                  indices.append(i)
 
     indices = np.array(indices)
@@ -126,12 +149,25 @@ def get_indices_npts(coordData, minX, maxX, nDim):
     return indices, nPts
 
 
+def is_number(s):
+    '''
+    returns True if string 's' is a number
+    '''
+    try:
+        complex(s) # for int, long, float and complex
+    except ValueError:
+        return False
+
+    return True
+
+
 def get_time_dirs(filePath, nSnaps):
     '''
     Returns list of time directories in the folder
     '''
 
     dirs = os.listdir(filePath)
+    dirs = [x for x in dirs if is_number(x)]
     dirs = np.sort( np.asarray(dirs) )
 
     nFiles = dirs.size

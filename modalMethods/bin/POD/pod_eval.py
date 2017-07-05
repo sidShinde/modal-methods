@@ -47,17 +47,20 @@ def get_modes(configFile):
     # non-dim parameter:
     h = float( configDict['h'] )
 
+    # a container for velocity vectors:
+    uDict = dict()
+
     if nDim == 2:
         # columns to read based on POD window:
         cols = get_columns(dir1, dir2)
 
-        [x1, x2, indices, nPts] = read_points_from_foamFile(filePath, cols, nSnaps, 
+        [x1, x2, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
                                                             patchName, minX, maxX, h, 
-                                                            nDim)
+                                                            nDim, cols)
 
-        [u1, u2] = read_velocity_from_foamFile(filePath, patchName, cols, indices, 
-                                               nSnaps, nPts, nDim)
-
+        [u1, u2] = read_velocity_from_foamFile(filePath, patchName, indices, 
+                                               nSnaps, nPts, nDim, cols)
+        
         c1 = np.dot(u1.T, u1)
         c2 = np.dot(u2.T, u2)
         c = np.add(c1, c2)/nSnaps
@@ -65,7 +68,8 @@ def get_modes(configFile):
         print('\n performing SVD ...')
         eigVect, singVals, _ = np.linalg.svd(c)
 
-        phi1, phi2 = get_normal_phi(u1, u2, u3=0, eigVect, nSnaps, nPts)
+        uDict['u1'], uDict['u2'] = u1, u2
+        phi1, phi2 = get_normal_phi(uDict, eigVect, nSnaps, nPts)
 
         singVals = np.delete(singVals, np.s_[nModes::])
         phi1     = np.delete(phi1, np.s_[nModes::], 1)
@@ -74,11 +78,11 @@ def get_modes(configFile):
         return x1, x2, phi1, phi2, singVals, patchName, nSnaps
 
     elif nDim == 3:
-         [x1, x2, x3, indices, nPts] = read_points_from_foamFile(filePath, cols, nSnaps, 
-                                                                 patchName, minX, maxX, 
-                                                                 h, nDim)
+        [x1, x2, x3, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
+                                                                patchName, minX, maxX, 
+                                                                h, nDim)
 
-        [u1, u2, u3] = read_velocity_from_foamFile(filePath, patchName, cols, indices, 
+        [u1, u2, u3] = read_velocity_from_foamFile(filePath, patchName, indices, 
                                                    nSnaps, nPts, nDim)
 
         c1 = np.dot(u1.T, u1)
@@ -89,7 +93,8 @@ def get_modes(configFile):
         print('\n performing SVD ...')
         eigVect, singVals, _ = np.linalg.svd(c)
 
-        phi1, phi2, phi3 = get_normal_phi(u1, u2, u3, eigVect, nSnaps, nPts)
+        uDict['u1'], uDict['u2'], uDict['u3'] = u1, u2, u3
+        phi1, phi2, phi3 = get_normal_phi(uDict, eigVect, nSnaps, nPts)
 
         singVals = np.delete(singVals, np.s_[nModes::])
         phi1     = np.delete(phi1, np.s_[nModes::], 1)
@@ -102,7 +107,7 @@ def get_modes(configFile):
         raise ValueError('Oops! Number of dimensions not defined ...')
 
 
-def get_normal_phi(u1, u2, u3=0, eigVect, nSnaps, nPts):
+def get_normal_phi(uDict, eigVect, nSnaps, nPts):
     '''
     Input
     -----
@@ -116,25 +121,28 @@ def get_normal_phi(u1, u2, u3=0, eigVect, nSnaps, nPts):
         phi1, phi2: normalized POD modes in direction 1, 2
     '''
 
-    phi1 = np.dot(u1, eigVect)
-    phi2 = np.dot(u2, eigVect)
-        
-    phiNorm = np.sum( np.square(phi1) + np.square(phi2), axis=0)
+    u1, u2 = uDict['u1'], uDict['u2']
+    phi1   = np.dot(u1, eigVect)
+    phi2   = np.dot(u2, eigVect)
+    
+    if len(uDict) == 2:
+        phiNorm = np.sum( np.square(phi1) + np.square(phi2), axis=0)
 
-    if u3 != 0:
+    elif len(uDict) == 3:
+        u3   = uDict['u3']
         phi3 = np.dot(u3, eigVect)
         phiNorm = np.sum( np.square(phi1) + np.square(phi2) + np.square(phi3), axis=0)
 
     phiNorm = np.sqrt( phiNorm )
 
-    if u3 == 0:
+    if len(uDict) == 2:
         for j in range(nSnaps):
             phi1[:, j] = np.divide(phi1[:, j], phiNorm[j])
             phi2[:, j] = np.divide(phi2[:, j], phiNorm[j])
 
             return phi1, phi2
             
-    else:
+    elif len(uDict) == 3:
         for j in range(nSnaps):
             phi1[:, j] = np.divide(phi1[:, j], phiNorm[j])
             phi2[:, j] = np.divide(phi2[:, j], phiNorm[j])
