@@ -86,7 +86,7 @@ def read_points_from_foamFile(filePath, nSnaps, patchName,
                    + patchName + '/points'
 
         coordData = read_data(filePath, cols)
-        coordData /= h
+        coordData = coordData.T/h
 
         indices, nPts = get_indices_npts(coordData, minX, maxX, nDim)
 
@@ -114,6 +114,7 @@ def read_points_from_foamFile(filePath, nSnaps, patchName,
 
             coordData = get_internal_field(cellCentres, skiprows=22)
             
+        coordData = coordData/h
         indices, nPts = get_indices_npts(coordData, minX, maxX, nDim)
         
         x1 = coordData[indices, 0]

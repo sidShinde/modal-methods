@@ -57,7 +57,6 @@ def get_modes(configFile):
         [x1, x2, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
                                                             patchName, minX, maxX, h, 
                                                             nDim, cols)
-
         [u1, u2] = read_velocity_from_foamFile(filePath, patchName, indices, 
                                                nSnaps, nPts, nDim, cols)
         
