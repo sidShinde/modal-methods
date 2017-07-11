@@ -5,6 +5,11 @@ from modalMethods.readers.reader_support_functions import *
 from modalMethods.readers.reader import *
 from .pod_eval import *
 
+from mpi4py import MPI
+from mpi4py.MPI import ANY_SOURCE
+
+comm = MPI.COMM_WORLD()
+
 def main():
     '''
     Writes the POD modes in the postProcessing directory
@@ -30,7 +35,7 @@ def main():
     configFile = open(args.config, mode='r')
 
     if nDim == 2:
-        [x1, x2, phi1, phi2, singVals, patchName, nSnaps] = get_modes(configFile)
+        [x1, x2, phi1, phi2, singVals, patchName, nSnaps] = get_modes(configFile, comm)
 
         # make POD directory in postProcessing:
         podDir = './postProcessing'
@@ -94,5 +99,5 @@ def main():
     else:
         raise ValueError('Oops! number of dimensions not specified ...')
 
-if __name__ == "__main__":
+if comm.rank == 0 and __name__ == "__main__":
     main()

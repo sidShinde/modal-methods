@@ -5,7 +5,7 @@ from modalMethods.readers.reader import *
 
 __all__=["get_modes", "get_normal_phi"]
 
-def get_modes(configFile):
+def get_modes(configFile, comm):
     '''
     Input
     -----
@@ -18,92 +18,97 @@ def get_modes(configFile):
         singVals: singular values
     '''
 
-    [configDict, modes, points] = config_to_dict(configFile)
+    rank = comm.Get_rank()
 
-    # read data from configDict:
-    filePath  = os.getcwd()
-    patchName = configDict["patchName"]
-    nSnaps    = int( configDict["nSnaps"] )
-    nModes    = int( configDict["nModes"] )
-    nDim      = int( configDict['nDim'] ) 
+    # root process begins execution:
+    if rank == 0:
 
-    if nDim == 2:
-        filePath  = filePath + '/postProcessing/cuttingPlane'
-        dir1      = configDict["direction1"]
-        dir2      = configDict["direction2"]
+        [configDict, modes, points] = config_to_dict(configFile)
 
-    # region of interest:
-    minX, maxX = dict(), dict()
-    minX['x1'] = float( configDict["x1min"] )
-    minX['x2'] = float( configDict["x2min"] )
+        # read data from configDict:
+        filePath  = os.getcwd()
+        patchName = configDict["patchName"]
+        nSnaps    = int( configDict["nSnaps"] )
+        nModes    = int( configDict["nModes"] )
+        nDim      = int( configDict['nDim'] ) 
 
-    maxX['x1'] = float( configDict["x1max"] )
-    maxX['x2'] = float( configDict["x2max"] )
+        if nDim == 2:
+            filePath  = filePath + '/postProcessing/cuttingPlane'
+            dir1      = configDict["direction1"]
+            dir2      = configDict["direction2"]
 
-    if nDim == 3:
-        minX['x3'] = float( configDict['x3min'] )
-        maxX['x3'] = float( configDict['x3max'] )
-
-    # non-dim parameter:
-    h = float( configDict['h'] )
-
-    # a container for velocity vectors:
-    uDict = dict()
-
-    if nDim == 2:
-        # columns to read based on POD window:
-        cols = get_columns(dir1, dir2)
-
-        [x1, x2, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
-                                                            patchName, minX, maxX, h, 
-                                                            nDim, cols)
-        [u1, u2] = read_velocity_from_foamFile(filePath, patchName, indices, 
-                                               nSnaps, nPts, nDim, cols)
+        # region of interest:
+        minX, maxX = dict(), dict()
+        minX['x1'] = float( configDict["x1min"] )
+        minX['x2'] = float( configDict["x2min"] )
         
-        c1 = np.dot(u1.T, u1)
-        c2 = np.dot(u2.T, u2)
-        c = np.add(c1, c2)/nSnaps
+        maxX['x1'] = float( configDict["x1max"] )
+        maxX['x2'] = float( configDict["x2max"] )
 
-        print('\n performing SVD ...')
-        eigVect, singVals, _ = np.linalg.svd(c)
+        if nDim == 3:
+            minX['x3'] = float( configDict['x3min'] )
+            maxX['x3'] = float( configDict['x3max'] )
 
-        uDict['u1'], uDict['u2'] = u1, u2
-        phi1, phi2 = get_normal_phi(uDict, eigVect, nSnaps, nPts)
+        # non-dim parameter:
+        h = float( configDict['h'] )
 
-        singVals = np.delete(singVals, np.s_[nModes::])
-        phi1     = np.delete(phi1, np.s_[nModes::], 1)
-        phi2     = np.delete(phi2, np.s_[nModes::], 1)
+        # a container for velocity vectors:
+        uDict = dict()
 
-        return x1, x2, phi1, phi2, singVals, patchName, nSnaps
+        if nDim == 2:
+            # columns to read based on POD window:
+            cols = get_columns(dir1, dir2)
 
-    elif nDim == 3:
-        [x1, x2, x3, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
-                                                                patchName, minX, maxX, 
-                                                                h, nDim)
+            [x1, x2, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
+                                                                patchName, minX, maxX, h, 
+                                                                nDim, cols)
+            [u1, u2] = read_velocity_from_foamFile(filePath, patchName, indices, 
+                                                   nSnaps, nPts, nDim, cols)
+        
+            c1 = np.dot(u1.T, u1)
+            c2 = np.dot(u2.T, u2)
+            c = np.add(c1, c2)/nSnaps
 
-        [u1, u2, u3] = read_velocity_from_foamFile(filePath, patchName, indices, 
-                                                   nSnaps, nPts, nDim)
+            print('\n performing SVD ...')
+            eigVect, singVals, _ = np.linalg.svd(c)
 
-        c1 = np.dot(u1.T, u1)
-        c2 = np.dot(u2.T, u2)
-        c3 = np.dot(u3.T, u3)
-        c = np.add(np.add(c1, c2), c3)/nSnaps
+            uDict['u1'], uDict['u2'] = u1, u2
+            phi1, phi2 = get_normal_phi(uDict, eigVect, nSnaps, nPts)
 
-        print('\n performing SVD ...')
-        eigVect, singVals, _ = np.linalg.svd(c)
+            singVals = np.delete(singVals, np.s_[nModes::])
+            phi1     = np.delete(phi1, np.s_[nModes::], 1)
+            phi2     = np.delete(phi2, np.s_[nModes::], 1)
 
-        uDict['u1'], uDict['u2'], uDict['u3'] = u1, u2, u3
-        phi1, phi2, phi3 = get_normal_phi(uDict, eigVect, nSnaps, nPts)
+            return x1, x2, phi1, phi2, singVals, patchName, nSnaps
 
-        singVals = np.delete(singVals, np.s_[nModes::])
-        phi1     = np.delete(phi1, np.s_[nModes::], 1)
-        phi2     = np.delete(phi2, np.s_[nModes::], 1)
-        phi3     = np.delete(phi3, np.s_[nModes::], 1)
+        elif nDim == 3:
+            [x1, x2, x3, indices, nPts] = read_points_from_foamFile(filePath, nSnaps, 
+                                                                    patchName, minX, maxX, 
+                                                                    h, nDim)
 
-        return x1, x2, x3, phi1, phi2, phi3, singVals, patchName, nSnaps
+            [u1, u2, u3] = read_velocity_from_foamFile(filePath, patchName, indices, 
+                                                       nSnaps, nPts, nDim)
 
-    else:
-        raise ValueError('Oops! Number of dimensions not defined ...')
+            c1 = np.dot(u1.T, u1)
+            c2 = np.dot(u2.T, u2)
+            c3 = np.dot(u3.T, u3)
+            c = np.add(np.add(c1, c2), c3)/nSnaps
+
+            print('\n performing SVD ...')
+            eigVect, singVals, _ = np.linalg.svd(c)
+            
+            uDict['u1'], uDict['u2'], uDict['u3'] = u1, u2, u3
+            phi1, phi2, phi3 = get_normal_phi(uDict, eigVect, nSnaps, nPts)
+            
+            singVals = np.delete(singVals, np.s_[nModes::])
+            phi1     = np.delete(phi1, np.s_[nModes::], 1)
+            phi2     = np.delete(phi2, np.s_[nModes::], 1)
+            phi3     = np.delete(phi3, np.s_[nModes::], 1)
+
+            return x1, x2, x3, phi1, phi2, phi3, singVals, patchName, nSnaps
+
+        else:
+            raise ValueError('Oops! Number of dimensions not defined ...')
 
 
 def get_normal_phi(uDict, eigVect, nSnaps, nPts):

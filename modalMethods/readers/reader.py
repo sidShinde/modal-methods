@@ -7,7 +7,8 @@ from .reader_support_functions import *
 
 __all__=["config_to_dict", "read_points_from_foamFile", "read_velocity_from_foamFile"]
 
-def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim, cols=0):
+def read_velocity_from_foamFile(filePath, patchName, indices, timeDirs, snapsA,
+                                snapB, nPts, nDim, cols=0):
     '''
     Input
     -----
@@ -23,8 +24,9 @@ def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim
         u1, u2: velocity vectors in the snapshot window
     '''
     
-    timeDirs = get_time_dirs(filePath, nSnaps)
+    #timeDirs = get_time_dirs(filePath, nSnaps)
 
+    nSnaps = snapB - snapA
     u1 = np.zeros((nPts, nSnaps))
     u2 = np.zeros((nPts, nSnaps))
     if nDim == 3:
@@ -34,7 +36,7 @@ def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim
 
     # 2d problem:
     if nDim == 2:
-        for i in tqdm( range(nSnaps), ncols=100 ):
+        for i in tqdm( range(snapA, snapB), ncols=100 ):
             fname = filePath + '/' + str(timeDirs[i]) + '/' + patchName + '/' \
                 'vectorField/U'
             data = read_data(fname, cols)
@@ -48,7 +50,7 @@ def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim
         return u1, u2
     # 3d problem:
     elif nDim == 3:
-        for i in tqdm( range(nSnaps), ncols=100 ):
+        for i in tqdm( range(snapA, snapB), ncols=100 ):
             fname = filePath + '/' + str(timeDirs[i]) + '/' + \
                     'U'
             data = get_internal_field(fname, skiprows=22)
