@@ -113,7 +113,7 @@ def get_internal_field(fname, skiprows=0):
     return np.array(data).T
 
 
-def get_indices_npts(coordData, minX, maxX, nDim):
+def get_indices_npts(coordData, minX, maxX, nDim, cols=None):
     '''
     Input
     -----
@@ -133,8 +133,8 @@ def get_indices_npts(coordData, minX, maxX, nDim):
     for i in range(npts):
 
         if nDim == 2:
-            if ( (minX['x1'] <= coordData[i, 0]) and (coordData[i, 0] <= maxX['x1']) and
-                 (minX['x2'] <= coordData[i, 1]) and (coordData[i, 1] <= maxX['x2']) ):
+            if ( (minX['x1'] <= coordData[i, cols[0]]) and (coordData[i, cols[0]] <= maxX['x1']) and
+                 (minX['x2'] <= coordData[i, cols[1]]) and (coordData[i, cols[1]] <= maxX['x2']) ):
                 indices.append(i)
 
         elif nDim == 3:

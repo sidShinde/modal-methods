@@ -7,7 +7,8 @@ from .reader_support_functions import *
 
 __all__=["config_to_dict", "read_points_from_foamFile", "read_velocity_from_foamFile"]
 
-def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim, cols=0):
+def read_velocity_from_foamFile(filePath, patchName, indices, 
+                                nSnaps, nPts, nDim, cols=None):
     '''
     Input
     -----
@@ -64,7 +65,7 @@ def read_velocity_from_foamFile(filePath, patchName, indices, nSnaps, nPts, nDim
 
 
 def read_points_from_foamFile(filePath, nSnaps, patchName,
-                              minX, maxX, h, nDim, cols=0):
+                              minX, maxX, h, nDim, cols=None):
     '''
     Input
     -----
@@ -88,7 +89,7 @@ def read_points_from_foamFile(filePath, nSnaps, patchName,
         coordData = read_data(filePath, cols)
         coordData = coordData.T/h
 
-        indices, nPts = get_indices_npts(coordData, minX, maxX, nDim)
+        indices, nPts = get_indices_npts(coordData, minX, maxX, nDim, cols)
 
         x1 = coordData[indices, 0]
         x2 = coordData[indices, 1]
